@@ -1,0 +1,64 @@
+version: '2.0'
+services:
+ 
+  #PHP Service
+  datafrete_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cloudsigma.com/php
+    container_name: datafrete_api
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: datafrete_api
+      SERVICE_TAGS: dev
+    working_dir: /var/www/html/
+    volumes:
+      - ./:/var/www/html/
+      - ./php/laravel.ini:/usr/local/etc/php/conf.d/laravel.ini
+    networks:
+      - datafrete-network
+ 
+  #Nginx Service
+  datafrete_webserver:
+    image: nginx:alpine
+    container_name: datafrete_webserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/html/
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - datafrete-network
+ 
+  #MySQL Service
+  datafrete_db:
+    image: mysql:5.7.32
+    container_name: datafrete_db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: teste_datafrete
+      MYSQL_ROOT_PASSWORD: teste_datafrete
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - datafrete_dbdata:/var/lib/mysql/
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - datafrete-network
+ 
+#Docker Networks
+networks:
+  datafrete-network:
+    driver: bridge
+#Volumes
+volumes:
+  datafrete_dbdata:
+    driver: local
